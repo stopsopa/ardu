@@ -357,6 +357,9 @@ class Display {
 //      3, // INPUTWATERING   
 //      4, // INPUTALLERR     
 //    };
+          u8g2.setDrawColor(0);
+          u8g2.drawBox(38,0,20,32);
+          u8g2.setDrawColor(1);
       
       sprintf (buf, "%d",  _threshold.get());
       clearThreshold();
