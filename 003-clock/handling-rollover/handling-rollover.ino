@@ -1,4 +1,5 @@
 
+
 unsigned long t() { 
   // max unsigned long 4294967295 // 2^32 - 1  https://www.arduino.cc/reference/en/language/variables/data-types/unsignedlong/
   return millis() + 4294967280;
@@ -19,7 +20,7 @@ void setup() {
   Serial.println("Starting...");
 }
 
-int i = 15;
+int i = 20;
 
 unsigned long k = t() + 6;
 
@@ -44,8 +45,13 @@ void loop() {
 }
 
 //will print:
-//Init Millis: 0
 //Starting...
+//Millis: 4294967280
+//Millis: 4294967281
+//Millis: 4294967282
+//Millis: 4294967283
+//Millis: 4294967284
+//Millis: 4294967285
 //Millis: 4294967286
 //Millis: 4294967287
 //Millis: 4294967288
@@ -61,5 +67,4 @@ void loop() {
 //Millis: 2
 //Millis: 3
 //Millis: 4
-//Millis: 5
 //End
