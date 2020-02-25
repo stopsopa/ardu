@@ -200,7 +200,7 @@ class ButtonShortLongPressed {
     byte pressed = 0;
     byte state = 0; // 0 - not pressed, 1 - short press, 2 - long press
   public:
-    ButtonShortLongPressed(byte pin, int thresholdms = 200): pin(pin), thresholdms(thresholdms) {}
+    ButtonShortLongPressed(byte pin, int thresholdms = 300): pin(pin), thresholdms(thresholdms) {}
     // call this function as early as possible in main loop() function
     // then later in loop() logic use pressed() method to detect if button pressed
     void loop(int t) { 
