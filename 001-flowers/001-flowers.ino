@@ -94,7 +94,7 @@ class Eprom {
     int _state;
     int _tmpstate;
     byte _changed = 0;
-    int _lastchnagedms;
+    unsigned long _lastchnagedms;
     int _debounce;
     byte _debug;
   public:
@@ -119,7 +119,7 @@ class Eprom {
 
     _changed = 0; // reset in this loop, and now let's try to detect if it indeed has changed
 
-    int t = millis();
+    unsigned long t = millis();
     
     if (_state != _tmpstate && t - _lastchnagedms > _debounce) {
 
@@ -196,14 +196,14 @@ class ButtonShortLongPressed {
     byte pin;
     int thresholdms;
     
-    int lastlow;
+    unsigned long lastlow;
     byte pressed = 0;
     byte state = 0; // 0 - not pressed, 1 - short press, 2 - long press
   public:
     ButtonShortLongPressed(byte pin, int thresholdms = 300): pin(pin), thresholdms(thresholdms) {}
     // call this function as early as possible in main loop() function
     // then later in loop() logic use pressed() method to detect if button pressed
-    void loop(int t) { 
+    void loop(unsigned long t) { 
         
         int s = digitalRead(pin); 
         
@@ -227,7 +227,7 @@ class ButtonShortLongPressed {
 
             if (pressed == 1) {
 
-                int m = millis();
+                unsigned long m = millis();
 
 //                Serial.println((String)"LOW & pressed: " + thresholdms + " diff:" + (m - lastlow));
 //                Serial.println((String)"m: " + m);
@@ -570,7 +570,7 @@ class Main {
         allowederr
       );
     }
-    void loop(int t) {
+    void loop(unsigned long t) {
       threshold.loop();
       interval.loop();
       watering.loop();
@@ -694,7 +694,7 @@ void setup(void) {
 //byte a = 0;
 //byte b = 0;
 
-int t;
+unsigned long t;
 void loop(void) {
 
   t = millis();
