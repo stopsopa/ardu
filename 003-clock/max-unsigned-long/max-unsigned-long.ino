@@ -27,7 +27,9 @@ void loop() {
   
   char buf[16];
 
-  sprintf(buf,"Millis: %lu",k);
+  sprintf(buf,"%lu",k);
+
+  Serial.print("loop: ");
 
   Serial.println(buf);
 

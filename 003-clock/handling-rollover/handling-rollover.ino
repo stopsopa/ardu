@@ -1,9 +1,92 @@
 
 
-unsigned long t() { 
+
+class TT {
+  protected:
+    unsigned long i = 0;
+  public:
+    unsigned long t() {
+
+      if (i == 0) {
+
+        i = (unsigned long)4294967295 - millis() - 15 - 2000;        
+  
+        char buf[16];
+      
+        sprintf(buf,"%lu",i);
+      
+        Serial.print("offset: ");
+      
+        Serial.println(buf);
+      }
+
+      return millis() + i;
+    }
+};
+TT t;
+
+unsigned long test() { 
   // max unsigned long 4294967295 // 2^32 - 1  https://www.arduino.cc/reference/en/language/variables/data-types/unsignedlong/
   return millis() + 4294967280;
 }
+
+class Metronomms {
+  protected:
+    unsigned long last = 0;    
+    int intervalms;
+    char state = -1; // it's unsigned byte - it might be interpreated as character in some cases, so be careful
+  public:
+    Metronomms(int intervalms): 
+      intervalms(intervalms)
+    {
+      
+    }
+    void loop() {
+      
+      unsigned long current = t.t();
+
+      if (state == -1 || current <= last) {
+
+        last = current;
+        
+        state = 0;
+
+        return;
+      }
+
+      unsigned long diff = current - last;
+
+      if (diff >= (unsigned long)intervalms) {
+  
+        char buf[16];
+        
+        sprintf(buf, "%lu", current);
+        
+        Serial.print((String) ":::");
+        
+        Serial.print(buf);
+        
+//        Serial.print((String) " ==== ");
+
+        
+        
+//        Serial.println((String)">: " + buf);
+
+        last = ((unsigned long)current / intervalms) * intervalms;
+
+        state = 1;
+
+        return;
+      }
+
+      state = 0;
+    }
+    char tick() {
+      return state;
+    }
+};
+
+Metronomms m(500);
 
 // max unsigned long 4294967295 // 2^32 - 1  https://www.arduino.cc/reference/en/language/variables/data-types/unsignedlong/
 void setup() {  
@@ -20,51 +103,59 @@ void setup() {
   Serial.println("Starting...");
 }
 
-int i = 20;
+int loops = 25;
 
-unsigned long k = t() + 6;
+int s = 0;
 
 void loop() {
+
+  m.loop();
+
+  if (m.tick()) {
+
+    s += 1;
+
+    loops -= 1;
+
+    Serial.println((String)": " + s);
+  }
+
   
-  char buf[16];
-
-  sprintf(buf,"Millis: %lu",k);
-
-  Serial.println(buf);
-
-  k += 1;
-  
-  if (i == 0) {
+  if (loops == 0) {
 
     Serial.println("End");
   
     while(1);
   }
-
-  i -= 1;
 }
 
 //will print:
+//Init Millis: 0
 //Starting...
-//Millis: 4294967280
-//Millis: 4294967281
-//Millis: 4294967282
-//Millis: 4294967283
-//Millis: 4294967284
-//Millis: 4294967285
-//Millis: 4294967286
-//Millis: 4294967287
-//Millis: 4294967288
-//Millis: 4294967289
-//Millis: 4294967290
-//Millis: 4294967291
-//Millis: 4294967292
-//Millis: 4294967293
-//Millis: 4294967294
-//Millis: 4294967295
-//Millis: 0
-//Millis: 1
-//Millis: 2
-//Millis: 3
-//Millis: 4
+//offset: 4294963780
+//:::4294965780: 1
+//:::4294966000: 2
+//:::4294966500: 3
+//:::4294967000: 4
+//:::500: 5
+//:::1000: 6
+//:::1500: 7
+//:::2000: 8
+//:::2500: 9
+//:::3000: 10
+//:::3500: 11
+//:::4000: 12
+//:::4500: 13
+//:::5000: 14
+//:::5500: 15
+//:::6000: 16
+//:::6500: 17
+//:::7000: 18
+//:::7500: 19
+//:::8000: 20
+//:::8500: 21
+//:::9000: 22
+//:::9500: 23
+//:::10000: 24
+//:::10500: 25
 //End
