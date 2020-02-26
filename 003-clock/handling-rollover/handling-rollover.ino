@@ -1,6 +1,35 @@
 
 
+#define UPBUTTON 2
 
+#define DOWNBUTTON 3
+
+class Button {
+  protected:
+    byte _pin;
+    byte _prevstate = LOW;
+    byte _state = LOW;
+  public:
+    Button(byte pin): _pin(pin) {}
+    // call this function as early as possible in main loop() function
+    // then later in loop() logic use pressed() method to detect if button pressed
+    void loop() { 
+        _state = LOW;
+        int state = digitalRead(_pin);      
+        if (state != _prevstate) {         
+          _prevstate = state;
+          if (_prevstate == LOW) {
+            _state = HIGH;
+          }
+        }
+      
+    }
+    byte pressed() {
+      return _state;
+    }
+};
+
+// test class
 class TT {
   protected:
     unsigned long i = 0;
@@ -22,8 +51,7 @@ class TT {
 
       return millis() + i;
     }
-};
-TT t;
+} t;
 
 unsigned long test() { 
   // max unsigned long 4294967295 // 2^32 - 1  https://www.arduino.cc/reference/en/language/variables/data-types/unsignedlong/
@@ -34,16 +62,23 @@ class Metronomms {
   protected:
     unsigned long last = 0;    
     int intervalms;
+    int correct = 0;
     char state = -1; // it's unsigned byte - it might be interpreated as character in some cases, so be careful
+    unsigned long ms() {
+      return t.t();
+    }
   public:
     Metronomms(int intervalms): 
       intervalms(intervalms)
-    {
-      
-    }
+    {}
     void loop() {
+
+      if (state == -1) {
+
+        reset();
+      }
       
-      unsigned long current = t.t();
+      unsigned long current = ms();
 
       if (state == -1 || current <= last) {
 
@@ -62,17 +97,15 @@ class Metronomms {
         
         sprintf(buf, "%lu", current);
         
-        Serial.print((String) ":::");
+        Serial.print((String) "   :::");
         
         Serial.print(buf);
         
 //        Serial.print((String) " ==== ");
 
-        
-        
 //        Serial.println((String)">: " + buf);
 
-        last = ((unsigned long)current / intervalms) * intervalms;
+        last = (((unsigned long) (current) / intervalms) * intervalms) + correct;
 
         state = 1;
 
@@ -81,12 +114,20 @@ class Metronomms {
 
       state = 0;
     }
+    void reset() {
+
+      last = ms(); 
+
+      correct = last % intervalms;
+    }
     char tick() {
       return state;
     }
 };
 
-Metronomms m(500);
+Button b(DOWNBUTTON);
+
+Metronomms m(1000);
 
 // max unsigned long 4294967295 // 2^32 - 1  https://www.arduino.cc/reference/en/language/variables/data-types/unsignedlong/
 void setup() {  
@@ -109,6 +150,15 @@ int s = 0;
 
 void loop() {
 
+  b.loop();
+
+  if (b.pressed()) {
+  
+    Serial.println("pressed");
+
+    m.reset();
+  }
+
   m.loop();
 
   if (m.tick()) {
@@ -121,41 +171,10 @@ void loop() {
   }
 
   
-  if (loops == 0) {
-
-    Serial.println("End");
-  
-    while(1);
-  }
+//  if (loops == 0) {
+//
+//    Serial.println("End");
+//  
+//    while(1);
+//  }
 }
-
-//will print:
-//Init Millis: 0
-//Starting...
-//offset: 4294963780
-//:::4294965780: 1
-//:::4294966000: 2
-//:::4294966500: 3
-//:::4294967000: 4
-//:::500: 5
-//:::1000: 6
-//:::1500: 7
-//:::2000: 8
-//:::2500: 9
-//:::3000: 10
-//:::3500: 11
-//:::4000: 12
-//:::4500: 13
-//:::5000: 14
-//:::5500: 15
-//:::6000: 16
-//:::6500: 17
-//:::7000: 18
-//:::7500: 19
-//:::8000: 20
-//:::8500: 21
-//:::9000: 22
-//:::9500: 23
-//:::10000: 24
-//:::10500: 25
-//End
