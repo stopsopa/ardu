@@ -53,11 +53,6 @@ class TT {
     }
 } t;
 
-unsigned long test() { 
-  // max unsigned long 4294967295 // 2^32 - 1  https://www.arduino.cc/reference/en/language/variables/data-types/unsignedlong/
-  return millis() + 4294967280;
-}
-
 class Metronomms {
   protected:
     unsigned long last = 0;    
@@ -100,10 +95,6 @@ class Metronomms {
         Serial.print((String) "   :::");
         
         Serial.print(buf);
-        
-//        Serial.print((String) " ==== ");
-
-//        Serial.println((String)">: " + buf);
 
         last = (((unsigned long) (current) / intervalms) * intervalms) + correct;
 
@@ -129,7 +120,6 @@ Button b(DOWNBUTTON);
 
 Metronomms m(1000);
 
-// max unsigned long 4294967295 // 2^32 - 1  https://www.arduino.cc/reference/en/language/variables/data-types/unsignedlong/
 void setup() {  
   Serial.begin(9600);
   
@@ -143,8 +133,6 @@ void setup() {
   
   Serial.println("Starting...");
 }
-
-int loops = 25;
 
 int s = 0;
 
@@ -165,16 +153,6 @@ void loop() {
 
     s += 1;
 
-    loops -= 1;
-
-    Serial.println((String)": " + s);
+    Serial.println((String)" tick: " + s);
   }
-
-  
-//  if (loops == 0) {
-//
-//    Serial.println("End");
-//  
-//    while(1);
-//  }
 }
