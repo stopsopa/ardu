@@ -17,6 +17,137 @@
 
 U8G2_SSD1306_128X32_UNIVISION_F_HW_I2C u8g2(U8G2_R0, /* reset=*/ U8X8_PIN_NONE);  // Adafruit ESP8266/32u4/ARM Boards + FeatherWing OLED
 
+class Metronomms {
+  protected:
+    unsigned long last = 0;    
+    int intervalms;
+    int correct = 0;
+    char state = -1; // it's unsigned byte - it might be interpreated as character in some cases, so be careful
+    unsigned long ms() {
+      return millis();
+    }
+  public:
+    Metronomms(int intervalms): 
+      intervalms(intervalms)
+    {}
+    void loop() {
+
+      if (state == -1) {
+
+        reset();
+      }
+      
+      unsigned long current = ms();
+
+      if (state == -1 || current <= last) {
+
+        last = current;
+        
+        state = 0;
+
+        return;
+      }
+
+      unsigned long diff = current - last;
+
+      if (diff >= (unsigned long)intervalms) {
+  
+//        char buf[16];
+//        
+//        sprintf(buf, "%lu", current);
+//        
+//        Serial.print((String) "   :::");
+//        
+//        Serial.print(buf);
+
+        last = (((unsigned long) (current) / intervalms) * intervalms) + correct;
+
+        state = 1;
+
+        return;
+      }
+
+      state = 0;
+    }
+    void reset() {
+
+      last = ms(); 
+
+      correct = last % intervalms;
+    }
+    char tick() {
+      return state;
+    }
+};
+
+/**
+ * Each tick will return number from 0-4 (if max=4) every interval, but in other case -1
+ * 
+ * For maxNum=4 & init=-1 sequence will be: 0 1 2 3 4 0 1 2 3 4 0 1 2 and so on
+ * For maxNum=3 & init=-1 sequence will be: 0 1 2 3 0 1 2 3 0 1 2 and so on
+ * For maxNum=3 & init=0 sequence will be: 1 2 3 0 1 2 3 0 1 2 and so on
+ * For maxNum=1 & init=-1 sequence will be: 0 1 0 1 0 1 0 1 and so on
+ * For maxNum=1 & init=0 sequence will be: 1 0 1 0 1 0 1 and so on
+ * For maxNum=5 & init=2 sequence will be: 3 4 5 0 1 2 3 4 5 0 1 2 3 4 5 0 1 2 3 and so on
+ * 
+ * use:
+ * 
+  Metronomloop lo();
+  lo.loop();
+
+  int iii = lo.tick();
+
+  if (iii != -2) {
+    Serial.println((String)"loop: " + iii);
+  }
+ */
+class Metronomloop {
+  protected:
+    byte maxNum = 4;
+    char state = 0;
+    Metronomms m;
+    byte add;
+  public:
+    Metronomloop(byte maxNum, int interval, byte init = -1, char add = 1):
+      maxNum(maxNum),
+      state(init),
+      m(interval),
+      add(add)
+    {
+      
+    }
+    void reset() {
+      state = 0;
+      m.reset();
+    }
+    void loop() {
+      m.loop();
+
+      if (m.tick()) {
+
+        state += add;
+
+        if (state > maxNum) {
+
+          state = 0;          
+        }
+
+        if (state < 0) {
+
+          state = maxNum;          
+        }
+      }
+    }
+    char tick() {
+
+      if (m.tick()) {
+
+        return state;
+      }
+
+      return -2;
+    }    
+};
 class Metronombyte {
   protected:
     byte f = 1; // first loop - don't increment
@@ -271,7 +402,7 @@ class Display {
   protected:  
     Drops drops;
     Seazons seazons;
-    Metronombyte m;
+    Metronomms m;
     byte state = 1; // 1 - seazons, 2 - drops, 3 - wrench
     void mainClear(byte x, byte y, byte w, byte h, bool white = false) {  
         if (white) {
@@ -336,7 +467,7 @@ class Display {
     ) {
       switch(state) {
         case 1:   
-          if (m.on()) {
+          if (m.tick()) {
             seazons.next(); 
           } 
           seazons.render(); 
@@ -691,11 +822,19 @@ void setup(void) {
   Serial.begin(9600);
 }
 
-//byte a = 0;
-//byte b = 0;
+Metronomloop lo(5, 1000, 2, -1);
 
 unsigned long t;
 void loop(void) {
+
+  lo.loop();
+
+
+  int iii = lo.tick();
+
+  if (iii != -2) {
+    Serial.print((String)" " + iii);
+  }
 
   t = millis();
 
