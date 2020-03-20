@@ -1,5 +1,7 @@
 
 
+// 2020-03-20 [friday] - v0.0.1 - first implementation
+
 #define UPBUTTON 2
 #define DOWNBUTTON 3
 
@@ -14,13 +16,13 @@ class ButtonShortLongPressed {
     
     byte pin;    
     unsigned long lasthigh;
-    int thresholdms;        // to distinguish if short or long press
+    int thresholdms;        // to distinguish short or long press
     byte repeatshortorlong; // 1 - short press, 2 - long press
     int repeatevery;        // interval to repeat pressing button
     int delaybeforerepeat; 
     
   public:
-    unsigned long d;
+    unsigned long d; // for production this property can be moved to other private properties
     ButtonShortLongPressed(
         byte pin, 
         int thresholdms = 300, 
