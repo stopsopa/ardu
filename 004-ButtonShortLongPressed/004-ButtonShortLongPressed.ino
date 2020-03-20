@@ -3,9 +3,8 @@
 // 2020-03-20 [friday] - v0.0.1 - first implementation
 
 #define UPBUTTON 2
-#define DOWNBUTTON 3
 
-
+// class starts here ...
 class ButtonShortLongPressed {
   protected:
   
@@ -134,6 +133,9 @@ class ButtonShortLongPressed {
       return state == 2;
     }
 };
+// and class ends here ...
+// from that point it's up to you if you export it to separate file or just copy and paste to sketch
+// https://www.youtube.com/watch?v=gmDkBQDZIrs
 
 void setup() {
   Serial.begin(9600);
