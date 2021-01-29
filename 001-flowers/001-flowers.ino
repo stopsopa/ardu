@@ -7,6 +7,7 @@
 #define UPBUTTON 2
 #define DOWNBUTTON 3
 
+
 //#define NORMAL 1
 //#define WATERING 2
 //#define ERROR_ 3
@@ -81,14 +82,14 @@ class Metronomms {
 };
 
 /**
- * Each tick will return number from 0-4 (if max=4) every interval, but in other case -1
+ * Each tick will return number from 0-3 (if max=4) every interval, but in other case -1
  * 
- * For maxNum=4 & init=-1 sequence will be: 0 1 2 3 4 0 1 2 3 4 0 1 2 and so on
- * For maxNum=3 & init=-1 sequence will be: 0 1 2 3 0 1 2 3 0 1 2 and so on
- * For maxNum=3 & init=0 sequence will be: 1 2 3 0 1 2 3 0 1 2 and so on
- * For maxNum=1 & init=-1 sequence will be: 0 1 0 1 0 1 0 1 and so on
- * For maxNum=1 & init=0 sequence will be: 1 0 1 0 1 0 1 and so on
- * For maxNum=5 & init=2 sequence will be: 3 4 5 0 1 2 3 4 5 0 1 2 3 4 5 0 1 2 3 and so on
+ * For maxNum=4 & init=-1 sequence will be: 0 1 2 3 0 1 2 3 0 1 2 and so on
+ * For maxNum=3 & init=-1 sequence will be: 0 1 2 0 1 2 0 1 2 and so on
+ * For maxNum=3 & init=0 sequence will be: 1 2 0 1 2 0 1 2 and so on
+ * For maxNum=2 & init=-1 sequence will be: 0 1 0 1 0 1 0 1 and so on
+ * For maxNum=2 & init=0 sequence will be: 1 0 1 0 1 0 1 and so on
+ * For maxNum=5 & init=2 sequence will be: 3 4 0 1 2 3 4 0 1 2 3 4 0 1 2 3 and so on
  * 
  * use:
  * 
@@ -104,7 +105,7 @@ class Metronomms {
 class Metronomloop {
   protected:
     byte maxNum = 4;
-    char state = 0;
+    char state = -2;
     Metronomms m;
     byte add;
   public:
@@ -116,8 +117,8 @@ class Metronomloop {
     {
       
     }
-    void reset() {
-      state = 0;
+    void reset(char s = -1) {
+      state = s;
       m.reset();
     }
     void loop() {
@@ -127,7 +128,7 @@ class Metronomloop {
 
         state += add;
 
-        if (state > maxNum) {
+        if (state >= maxNum) {
 
           state = 0;          
         }
@@ -145,9 +146,10 @@ class Metronomloop {
         return state;
       }
 
-      return -2;
+      return -1;
     }    
 };
+
 class Metronombyte {
   protected:
     byte f = 1; // first loop - don't increment
@@ -327,27 +329,63 @@ class ButtonShortLongPressed {
     byte pin;
     int thresholdms;
     
-    unsigned long lastlow;
+    unsigned long lasthigh;
     byte pressed = 0;
     byte state = 0; // 0 - not pressed, 1 - short press, 2 - long press
+    int repeateafter = 0; 
+    int repeatinterval = 500;
+    unsigned long lastrepeat = 0;
   public:
-    ButtonShortLongPressed(byte pin, int thresholdms = 300): pin(pin), thresholdms(thresholdms) {}
+    ButtonShortLongPressed(
+        byte pin, 
+        int thresholdms = 300, 
+        int repeateafter = 0, 
+        int repeatinterval = 500
+    ): 
+      pin(pin), 
+      thresholdms(thresholdms),
+      repeateafter(repeateafter),
+      repeatinterval(repeatinterval)
+    {}
     // call this function as early as possible in main loop() function
     // then later in loop() logic use pressed() method to detect if button pressed
-    void loop(unsigned long t) { 
+    void loop() { 
         
         int s = digitalRead(pin); 
+
+        unsigned long m = millis();
         
         if (s == HIGH) { 
 
-            if (pressed != 1) { 
+            state       = 0;
 
-                state   = 0;
-              
-                pressed = 1;
+            if (pressed != 1) { 
                 
-                lastlow = t; 
+                lasthigh     = m; 
             }
+
+            if (pressed == 1 && repeateafter > 0) {
+
+                if (lastrepeat > 0) {
+
+                    unsigned long diff = m - lastrepeat;
+    
+                    if (diff > repeatinterval) {
+    
+                        Serial.println("well");
+
+                        state = 1;          
+
+                        lastrepeat  = m;  
+                    }                
+                } 
+                else {          
+
+                    lastrepeat  = m;   
+                }
+            }
+              
+            pressed     = 1;
             
             return;
         } 
@@ -358,27 +396,32 @@ class ButtonShortLongPressed {
 
             if (pressed == 1) {
 
-                unsigned long m = millis();
+                unsigned long diff = m - lasthigh;
 
-//                Serial.println((String)"LOW & pressed: " + thresholdms + " diff:" + (m - lastlow));
+//                if (diff < 150) {
+//
+//                  return;
+//                }
+
+//                Serial.println((String)"LOW & pressed: " + thresholdms + " diff:" + (m - lasthigh));
 //                Serial.println((String)"m: " + m);
 //                Serial.println((String)"t: " + thresholdms);
       
-                if (m - lastlow > thresholdms) {
+                if (diff > thresholdms) {
     
-//                    Serial.println("long");
+                    Serial.println("long");
                   
                     state = 2;
                 } 
                 else {
     
-//                    Serial.println("short");
+                    Serial.println("short");
                   
                     state = 1;            
-                }  
-                   
-                pressed = 0;            
+                }            
             }
+                   
+            pressed = 0;  
         } 
     }
     byte s() {
@@ -707,8 +750,8 @@ class Main {
       watering.loop();
       allowederr.loop();
       display.loop();  
-      down.loop(t);
-      up.loop(t);
+      down.loop();
+      up.loop();
 
       bool l = false;
 
@@ -751,21 +794,21 @@ class Main {
                 break;    
               case 2: // INPUTINTERVAL
                 i = interval.get();
-                if (i > 0) {
+                if (i < 255) {
                   i += 1;
                 }
                 interval.set(i);
                 break;    
               case 3: // INPUTWATERING
                 i = watering.get();
-                if (i > 0) {
+                if (i < 255) {
                   i += 1;
                 }
                 watering.set(i);
                 break;    
               default: // INPUTALLERR
                 i = allowederr.get();
-                if (i > 0) {
+                if (i < 255) {
                   i += 1;
                 }
                 allowederr.set(i);
@@ -811,87 +854,57 @@ class Main {
             }  
         }          
     }
-} m;
+};
 
-//Button button(UPBUTTON);
-//ButtonToggle buttontoggle(UPBUTTON);
-//ButtonShortLongPressed buttonshortlongpressed(UPBUTTON);
+//Main m;
+
+
+ButtonShortLongPressed up(UPBUTTON, 300, 1000, 500);
+ButtonShortLongPressed down(DOWNBUTTON, 300, 1000, 500);
 
 void setup(void) {
   u8g2.begin();
   Serial.begin(9600);
 }
 
-Metronomloop lo(5, 1000, 2, -1);
-
 unsigned long t;
+
+long k  = 1000;
+int p  = k;
 void loop(void) {
-
-  lo.loop();
-
-
-  int iii = lo.tick();
-
-  if (iii != -2) {
-    Serial.print((String)" " + iii);
-  }
 
   t = millis();
 
-//  buttontoggle.loop();
-//  button.loop();
-//  buttonshortlongpressed.loop(t);
-     
-//  if (buttonshortlongpressed.s()) { 
-//    
-//    a = !a;
-//    
-//    
-//    if (a) { 
-//      m.setState(Main::STATEWORKING);
-////      display.wrench();
-//    }   
-//    else {
-//      m.setState(Main::STATEWATERING);
-////      display.wrench(true);
-//    }    
-//  }  
-//  if (buttonshortlongpressed.l()) { 
+  up.loop();
+  down.loop();
+
+  if (up.l()) {
+    k += 100;
+  }
+
+  if (down.l()) {
+    k -= 100;
+  }
+
+  if (up.s()) {
+    k += 1;
+  }
+
+  if (down.s()) {
+    k -= 1;
+  }
+
+  if (p != k) {
+    p = k;
+    Serial.println((String)k);
+  }
+
+//  m.loop(t);
 //
-//    m.setState(Main::STATEERROR);
-//    b = !b;
-//  }   
-
-  m.loop(t);
-
-  u8g2.firstPage();    
-  do {    
-//    display.wrench();
-//    display.checkInterval("120s");
-//    display.sensor("56");
-//    display.errorCounter("2:3");
-//    display.timeLeft("56s");
-//    display.wateringTime("13s");
-//    display.threshold("67s");
-
-    m.render(t);
-//    
-//    if (a) { 
-//      m.setState(Main::STATEWORKING);
-////      display.wrench();
-//    }   
-//    else {
-//      m.setState(Main::STATEWATERING);
-////      display.wrench(true);
-//    }    
-//    if (b) { 
-//      display.wateringTime("80");
-//    }   
-//    else {
-//      display.wateringTime("90", true);
-//    }    
-    
-  } while ( u8g2.nextPage() );
+//  u8g2.firstPage();    
+//  do { 
+//    m.render(t);    
+//  } while ( u8g2.nextPage() );
 }
 
   // https://github.com/olikraus/u8g2/wiki/u8g2setupcpp#introduction
